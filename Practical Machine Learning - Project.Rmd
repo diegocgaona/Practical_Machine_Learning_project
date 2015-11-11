@@ -1,0 +1,43 @@
+---
+title: "Practical Machine Learning - Project"
+author: "Diego Gaona"
+date: "11 de novembro de 2015"
+output: html_document
+---
+```{r load, echo = F, results='hide', message=FALSE, warning=FALSE}
+require("knitr")
+opts_chunk$set(echo = T, cache = TRUE, fig.width=13, fig.height=6.1)
+knitr::opts_chunk$set(tidy=FALSE, fig.path='figures/')
+require(ggplot2)
+require(doParallel)
+require(data.table)
+require(caret)
+coreCount <- detectCores()
+cl <- makeCluster(coreCount / 2)
+registerDoParallel(cl)
+getDoParWorkers()
+
+```
+
+
+
+```{r}
+rawtraining <- fread(input = "pml-training.csv", header = T, stringsAsFactors = F, na.strings=c("NA", "N/A", "", " ", "  "))
+
+na_count <- as.data.frame(sapply(rawtraining, function(y) sum(length(which(is.na(y))))))
+na_percent <- as.data.frame(na_count/length(rawtraining$classe))
+col_exclude <- na_percent>.97
+na_percent <- cbind(na_percent, col_exclude, deparse.level = 1)
+
+
+mostlyNA <- sapply(ptrain1, function(x) mean(is.na(x))) > 0.95
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
