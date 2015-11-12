@@ -8,29 +8,93 @@ output: html_document
 require("knitr")
 opts_chunk$set(echo = T, cache = TRUE, fig.width=13, fig.height=6.1)
 knitr::opts_chunk$set(tidy=FALSE, fig.path='figures/')
-require(ggplot2)
-require(doParallel)
-require(data.table)
+## require(ggplot2) caret loads ggplot2
+## require(doParallel)
 require(caret)
-coreCount <- detectCores()
-cl <- makeCluster(coreCount / 2)
-registerDoParallel(cl)
-getDoParWorkers()
+require(randomForest)
 
 ```
 
 
 
 ```{r}
-rawtraining <- fread(input = "pml-training.csv", header = T, stringsAsFactors = F, na.strings=c("NA", "N/A", "", " ", "  "))
+rawtraining <- read.csv(file = "pml-training.csv", header = T, stringsAsFactors = F, na.strings=c("NA", "N/A", "", " ", "  "))
+rawtraining$classe <- as.factor(rawtraining$classe)
+NA_97percent <- sapply(rawtraining, function(x) mean(is.na(x))) < 0.97
+training1 <- subset(rawtraining, select = NA_97percent == 1)
+nzvtrain <- nearZeroVar(training1, saveMetrics= TRUE)[4]
 
-na_count <- as.data.frame(sapply(rawtraining, function(y) sum(length(which(is.na(y))))))
-na_percent <- as.data.frame(na_count/length(rawtraining$classe))
-col_exclude <- na_percent>.97
-na_percent <- cbind(na_percent, col_exclude, deparse.level = 1)
+training1 <- subset(training1, select = nzvtrain == 0)
+
+testing <- read.csv(file = "pml-testing.csv", header = T, stringsAsFactors = F, na.strings=c("NA", "N/A", "", " ", "  "))
+## I think is not necessary subset as training, the model search for the column names.
+## testing <- subset(testing1, select = NA_97percent == 1)
+## testing <- subset(testing, select = nzvtrain == 0)
+
+set.seed(855)
+## train_control = trainControl(method="repeatedcv", number=5, repeats=5)
+inTrain <- createDataPartition(y = training1$classe, p=0.7, list=FALSE)
+training <- training1[inTrain,]
+mytesting <- training1[-inTrain,]
+
+## coreCount <- detectCores()
+## cl <- makeCluster(coreCount / 2)
+## registerDoParallel(cl)
+
+## Using preprocess in traing: (use predict.caret on the testing to use saved preProcess)
+modFitrf <- train(classe ~ .,method = "rf", data = training[,3:59], preProcess=c("pca"), trControl = trainControl(method="repeatedcv", number=10, repeats=3))
+## modFitrf2 <- randomForest(formula = classe ~ .,data =  training[,3:59])
+saveRDS(modFitrf, "modFitrf.rds")
+## modFitrf <- readRDS("modFitrf.rds")
+
+modFitrf_no_pre_pca <- train(classe ~ .,method = "rf", data = training[,3:59])
+saveRDS(modFitrf_no_pre_pca, "modFitrf_no_pre_pca.rds")
+## modFitrf <- readRDS("modFitrf_no_pre_pca.rds")
+
+modFitgbm <- train(classe ~ .,method = "gbm", data = training[,3:59])
+saveRDS(modFitgbm, "modFitgbm.rds")
+## modFitgbm <- readRDS("modFitgbm.rds")
+
+modFitgbmControl <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
+saveRDS(modFitgbmControl, "modFitgbmControl.rds")
+## modFitgbm <- readRDS("modFitgbmControl")
+predictgbmControl <- predict(modFitgbmControl, newdata = mytesting)
+
+modFitAdaBag <- train(classe ~ .,method = "AdaBag", data = training[,3:59])
+saveRDS(modFitAdaBag, "modFitAdaBag.rds")
 
 
-mostlyNA <- sapply(ptrain1, function(x) mean(is.na(x))) > 0.95
+inTraintest <- createDataPartition(y = training1$classe, p=0.1, list=FALSE)
+trainingtest <- training1[inTraintest,]
+
+modFitsvm <- train(classe ~ .,method = "svmLinear", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
+predsvm <- predict(modFitsvm, newdata = mytesting)
+confusionMatrix(mytesting$classe, predsvm)$overall
+modFitsvm <- train(classe ~ .,method = "svmLinear", data = trainingtest[,3:59])
+predsvm <- predict(modFitsvm, newdata = mytesting)
+confusionMatrix(mytesting$classe, predsvm)$overall
+
+
+modFitrftest <- train(classe ~ .,method = "rf", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
+predrftest <- predict(modFitrftest, newdata = mytesting)
+confusionMatrix(mytesting$classe, predrftest)$overall
+modFitrftest <- train(classe ~ .,method = "rf", data = trainingtest[,3:59])
+predrftest <- predict(modFitrftest, newdata = mytesting)
+confusionMatrix(mytesting$classe, predrftest)$overall
+
+modFitgbmtestcontrol <- train(classe ~ .,method = "gbm", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
+predgbmtestcontrol <- predict(modFitgbmtestcontrol, newdata = mytesting)
+confusionMatrix(mytesting$classe, predgbmtestcontrol)$overall
+modFitgbmtest <- train(classe ~ .,method = "gbm", data = trainingtest[,3:59])
+predgbmtest <- predict(modFitgbmtest, newdata = mytesting) 
+confusionMatrix(mytesting$classe, predgbmtest)$overall
+
+predrf <- predict(modFitrf, newdata = mytesting)
+confusionMatrix(mytesting$classe, predrf)$overall
+
+predrftest <- predict(modFitrf, newdata = testing)
+
+## After all, would be good train the model with all the data
 
 ```
 
