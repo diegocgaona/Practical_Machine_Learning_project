@@ -8,8 +8,6 @@ output: html_document
 require("knitr")
 opts_chunk$set(echo = T, cache = TRUE, fig.width=13, fig.height=6.1)
 knitr::opts_chunk$set(tidy=FALSE, fig.path='figures/')
-## require(ggplot2) caret loads ggplot2
-## require(doParallel)
 require(caret)
 require(randomForest)
 
@@ -27,75 +25,68 @@ nzvtrain <- nearZeroVar(training1, saveMetrics= TRUE)[4]
 training1 <- subset(training1, select = nzvtrain == 0)
 
 testing <- read.csv(file = "pml-testing.csv", header = T, stringsAsFactors = F, na.strings=c("NA", "N/A", "", " ", "  "))
-## I think is not necessary subset as training, the model search for the column names.
-## testing <- subset(testing1, select = NA_97percent == 1)
-## testing <- subset(testing, select = nzvtrain == 0)
 
 set.seed(855)
-## train_control = trainControl(method="repeatedcv", number=5, repeats=5)
 inTrain <- createDataPartition(y = training1$classe, p=0.7, list=FALSE)
 training <- training1[inTrain,]
 mytesting <- training1[-inTrain,]
 
-## coreCount <- detectCores()
-## cl <- makeCluster(coreCount / 2)
-## registerDoParallel(cl)
-
-## Using preprocess in traing: (use predict.caret on the testing to use saved preProcess)
+## Using preprocess in training: (use predict.caret on the testing to use saved preProcess)
 modFitrf <- train(classe ~ .,method = "rf", data = training[,3:59], preProcess=c("pca"), trControl = trainControl(method="repeatedcv", number=10, repeats=3))
-## modFitrf2 <- randomForest(formula = classe ~ .,data =  training[,3:59])
 saveRDS(modFitrf, "modFitrf.rds")
 ## modFitrf <- readRDS("modFitrf.rds")
+predictrf <- predict(modFitrf, newdata = mytesting)
+confusionMatrix(mytesting$classe, predictrf)$overall
 
 modFitrf_no_pre_pca <- train(classe ~ .,method = "rf", data = training[,3:59])
 saveRDS(modFitrf_no_pre_pca, "modFitrf_no_pre_pca.rds")
-## modFitrf <- readRDS("modFitrf_no_pre_pca.rds")
+## modFitrf_no_pre_pca <- readRDS("modFitrf_no_pre_pca.rds")
+predictrf_no_pre_pca <- predict(modFitrf_no_pre_pca, newdata = mytesting)
+confusionMatrix(mytesting$classe, predictrf_no_pre_pca)$overall
+
+modFitrfFinal <- train(classe ~ .,method = "rf", data = training[,3:59])
+saveRDS(modFitrfFinal, "modFitrfFinal.rds")
+modFitrfFinal <- readRDS("modFitrfFinal.rds")
+predictrfFinal <- predict(modFitrfFinal, newdata = testing)
+
+modFitgbmFinal <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
+saveRDS(modFitgbmFinal, "modFitgbmFinal.rds")
+modFitgbmFinal <- readRDS("modFitgbmFinal.rds")
+predictgbmFinal <- predict(modFitgbmFinal, newdata = testing)
 
 modFitgbm <- train(classe ~ .,method = "gbm", data = training[,3:59])
 saveRDS(modFitgbm, "modFitgbm.rds")
 ## modFitgbm <- readRDS("modFitgbm.rds")
+predictgbm <- predict(modFitgbm, newdata = mytesting)
+
 
 modFitgbmControl <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
 saveRDS(modFitgbmControl, "modFitgbmControl.rds")
-## modFitgbm <- readRDS("modFitgbmControl")
+## modFitgbmControl <- readRDS("modFitgbmControl.rds")
 predictgbmControl <- predict(modFitgbmControl, newdata = mytesting)
+confusionMatrix(mytesting$classe, predictgbmControl)$overall
 
-modFitAdaBag <- train(classe ~ .,method = "AdaBag", data = training[,3:59])
-saveRDS(modFitAdaBag, "modFitAdaBag.rds")
-
-
-inTraintest <- createDataPartition(y = training1$classe, p=0.1, list=FALSE)
-trainingtest <- training1[inTraintest,]
-
-modFitsvm <- train(classe ~ .,method = "svmLinear", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
+modFitsvm <- train(classe ~ .,method = "svmLinear", data = training[,3:59])
 predsvm <- predict(modFitsvm, newdata = mytesting)
 confusionMatrix(mytesting$classe, predsvm)$overall
-modFitsvm <- train(classe ~ .,method = "svmLinear", data = trainingtest[,3:59])
-predsvm <- predict(modFitsvm, newdata = mytesting)
-confusionMatrix(mytesting$classe, predsvm)$overall
-
-
-modFitrftest <- train(classe ~ .,method = "rf", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
-predrftest <- predict(modFitrftest, newdata = mytesting)
-confusionMatrix(mytesting$classe, predrftest)$overall
-modFitrftest <- train(classe ~ .,method = "rf", data = trainingtest[,3:59])
-predrftest <- predict(modFitrftest, newdata = mytesting)
-confusionMatrix(mytesting$classe, predrftest)$overall
-
-modFitgbmtestcontrol <- train(classe ~ .,method = "gbm", trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T), data = trainingtest[,3:59])
-predgbmtestcontrol <- predict(modFitgbmtestcontrol, newdata = mytesting)
-confusionMatrix(mytesting$classe, predgbmtestcontrol)$overall
-modFitgbmtest <- train(classe ~ .,method = "gbm", data = trainingtest[,3:59])
-predgbmtest <- predict(modFitgbmtest, newdata = mytesting) 
-confusionMatrix(mytesting$classe, predgbmtest)$overall
-
-predrf <- predict(modFitrf, newdata = mytesting)
-confusionMatrix(mytesting$classe, predrf)$overall
-
-predrftest <- predict(modFitrf, newdata = testing)
 
 ## After all, would be good train the model with all the data
 
+## Make exploratory plots of the variable used.
+## Make a time series plot off the intervals by the sum of some sensors (if interactive, filter by subject)
+## Make a plot of the final model (how compare models using plots?)
+## How use two models together to cross validate the results?
+
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(predictrfFinal)
 ```
 
 You can also embed plots, for example:
