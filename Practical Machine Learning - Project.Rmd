@@ -2,7 +2,10 @@
 title: "Practical Machine Learning - Project"
 author: "Diego Gaona"
 date: "11 de novembro de 2015"
-output: html_document
+output:
+  html_document:
+    theme: readable
+    highlight: espresso
 ---
 ```{r load, echo = F, results='hide', message=FALSE, warning=FALSE}
 require("knitr")
