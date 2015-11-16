@@ -78,29 +78,40 @@ mytesting <- training1[-inTrain,]
 ```
 
 ##Creating the models  
-Now we create some modeles using the training data, to test with our "mytesting" data. We train and test 3 models. I tried some others, as Random Forest with preprocess PCA, SVN and KNN (very innacurate in this data), but with worst  results on "mytesting", and because of it, I didn't put these models on this final report.
-**Observation:** in this fiel, I only loaded my models from my previous trained models, some models take more than one hour to execute, because of that, I put some part as comments.  
+Now we create some modeles using the training data, to test with our "mytesting" data. We train and test 3 models. I tried some others, as Random Forest with preprocess PCA, SVN and KNN (very innacurate in this data), but with worst  results on "mytesting", and because of it, I didn't put these models on this final report.  
 ```{r training_models}
-
 ## Random forest model
-## modFitrf_no_pre_pca <- train(classe ~ .,method = "rf", data = training[,3:59])
-## saveRDS(modFitrf_no_pre_pca, "modFitrf_no_pre_pca.rds")
-modFitrf_no_pre_pca <- readRDS("modFitrf_no_pre_pca.rds")
+if( !file.exists('modFitrf_no_pre_pca.rds')) {
+    set.seed(855)
+    modFitrf_no_pre_pca <- train(classe ~ .,method = "rf", data = training[,3:59])
+    saveRDS(modFitrf_no_pre_pca, "modFitrf_no_pre_pca.rds")
+    } else {
+        modFitrf_no_pre_pca <- readRDS("modFitrf_no_pre_pca.rds")
+        }
 predictrf_no_pre_pca <- predict(modFitrf_no_pre_pca, newdata = mytesting)
 
 ## Stochastic Gradient Boosting Model
-## modFitgbmControl <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
-## saveRDS(modFitgbmControl, "modFitgbmControl.rds")
-modFitgbmControl <- readRDS("modFitgbmControl.rds")
+if( !file.exists('modFitgbmControl.rds')) {
+    set.seed(855)
+    modFitgbmControl <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
+    saveRDS(modFitgbmControl, "modFitgbmControl.rds")
+    } else {
+        modFitgbmControl <- readRDS("modFitgbmControl.rds")
+        }
 predictgbmControl <- predict(modFitgbmControl, newdata = mytesting)
 
 ## Support Vector Machines with Linear Kernel Model
-## modFitsvm <- train(classe ~ .,method = "svmLinear", data = training[,3:59])
-## saveRDS(modFitsvm, "modFitsvm.rds")
-modFitsvm <- readRDS("modFitsvm.rds")
+if( !file.exists('modFitsvm.rds')) {
+    set.seed(855)
+    modFitsvm <- train(classe ~ .,method = "svmLinear", data = training[,3:59])
+    saveRDS(modFitsvm, "modFitsvm.rds")
+    } else {
+        modFitsvm <- readRDS("modFitsvm.rds")
+        }
 predsvm <- predict(modFitsvm, newdata = mytesting)
 
 ## Confusion matrix to show the accuracy of the models
+
 ## ## Random forest model accuracy
 confusionMatrix(mytesting$classe, predictrf_no_pre_pca)$overall
 ## Stochastic Gradient Boosting Model accuracy
@@ -115,15 +126,23 @@ My selected model is based on Random Forest, the model with best accuracy (1.0) 
 
 ```{r final_models}
 ## Random forest Final Model
-## modFitrfFinal <- train(classe ~ .,method = "rf", data = training[,3:59])
-## saveRDS(modFitrfFinal, "modFitrfFinal.rds")
-modFitrfFinal <- readRDS("modFitrfFinal.rds")
+if( !file.exists('modFitrfFinal.rds')) {
+    set.seed(855)
+    modFitrfFinal <- train(classe ~ .,method = "rf", data = training[,3:59])
+    saveRDS(modFitrfFinal, "modFitrfFinal.rds")
+    } else {
+        modFitrfFinal <- readRDS("modFitrfFinal.rds")
+        }
 predictrfFinal <- predict(modFitrfFinal, newdata = testing)
 
 ## Stochastic Gradient Boosting Final Model
-## modFitgbmFinal <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
-## saveRDS(modFitgbmFinal, "modFitgbmFinal.rds")
-modFitgbmFinal <- readRDS("modFitgbmFinal.rds")
+if( !file.exists('modFitrfFinal.rds')) {
+    set.seed(855)
+    modFitgbmFinal <- train(classe ~ .,method = "gbm", data = training[,3:59], trControl = trainControl(method="repeatedcv", number=10, repeats=3, savePred=T))
+    saveRDS(modFitgbmFinal, "modFitgbmFinal.rds")
+    } else {
+        modFitgbmFinal <- readRDS("modFitgbmFinal.rds")
+        }
 predictgbmFinal <- predict(modFitgbmFinal, newdata = testing)
 ```
 ## Plots for the 2 best models
