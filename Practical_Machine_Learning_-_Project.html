@@ -148,26 +148,39 @@ mytesting &lt;-<span class="st"> </span>training1[-inTrain,]</code></pre></div>
 </div>
 <div id="creating-the-models" class="section level2">
 <h2>Creating the models</h2>
-<p>Now we create some modeles using the training data, to test with our “mytesting” data. We train and test 3 models. I tried some others, as Random Forest with preprocess PCA, SVN and KNN (very innacurate in this data), but with worst results on “mytesting”, and because of it, I didn’t put these models on this final report. <strong>Observation:</strong> in this fiel, I only loaded my models from my previous trained models, some models take more than one hour to execute, because of that, I put some part as comments.</p>
+<p>Now we create some modeles using the training data, to test with our “mytesting” data. We train and test 3 models. I tried some others, as Random Forest with preprocess PCA, SVN and KNN (very innacurate in this data), but with worst results on “mytesting”, and because of it, I didn’t put these models on this final report.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Random forest model
-## modFitrf_no_pre_pca &lt;- train(classe ~ .,method = &quot;rf&quot;, data = training[,3:59])
-## saveRDS(modFitrf_no_pre_pca, &quot;modFitrf_no_pre_pca.rds&quot;)
-modFitrf_no_pre_pca &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitrf_no_pre_pca.rds&quot;</span>)
+if( !<span class="kw">file.exists</span>(<span class="st">'modFitrf_no_pre_pca.rds'</span>)) {
+    <span class="kw">set.seed</span>(<span class="dv">855</span>)
+    modFitrf_no_pre_pca &lt;-<span class="st"> </span><span class="kw">train</span>(classe ~<span class="st"> </span>.,<span class="dt">method =</span> <span class="st">&quot;rf&quot;</span>, <span class="dt">data =</span> training[,<span class="dv">3</span>:<span class="dv">59</span>])
+    <span class="kw">saveRDS</span>(modFitrf_no_pre_pca, <span class="st">&quot;modFitrf_no_pre_pca.rds&quot;</span>)
+    } else {
+        modFitrf_no_pre_pca &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitrf_no_pre_pca.rds&quot;</span>)
+        }
 predictrf_no_pre_pca &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitrf_no_pre_pca, <span class="dt">newdata =</span> mytesting)
 
 ## Stochastic Gradient Boosting Model
-## modFitgbmControl &lt;- train(classe ~ .,method = &quot;gbm&quot;, data = training[,3:59], trControl = trainControl(method=&quot;repeatedcv&quot;, number=10, repeats=3, savePred=T))
-## saveRDS(modFitgbmControl, &quot;modFitgbmControl.rds&quot;)
-modFitgbmControl &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitgbmControl.rds&quot;</span>)
+if( !<span class="kw">file.exists</span>(<span class="st">'modFitgbmControl.rds'</span>)) {
+    <span class="kw">set.seed</span>(<span class="dv">855</span>)
+    modFitgbmControl &lt;-<span class="st"> </span><span class="kw">train</span>(classe ~<span class="st"> </span>.,<span class="dt">method =</span> <span class="st">&quot;gbm&quot;</span>, <span class="dt">data =</span> training[,<span class="dv">3</span>:<span class="dv">59</span>], <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;repeatedcv&quot;</span>, <span class="dt">number=</span><span class="dv">10</span>, <span class="dt">repeats=</span><span class="dv">3</span>, <span class="dt">savePred=</span>T))
+    <span class="kw">saveRDS</span>(modFitgbmControl, <span class="st">&quot;modFitgbmControl.rds&quot;</span>)
+    } else {
+        modFitgbmControl &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitgbmControl.rds&quot;</span>)
+        }
 predictgbmControl &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitgbmControl, <span class="dt">newdata =</span> mytesting)
 
 ## Support Vector Machines with Linear Kernel Model
-## modFitsvm &lt;- train(classe ~ .,method = &quot;svmLinear&quot;, data = training[,3:59])
-## saveRDS(modFitsvm, &quot;modFitsvm.rds&quot;)
-modFitsvm &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitsvm.rds&quot;</span>)
+if( !<span class="kw">file.exists</span>(<span class="st">'modFitsvm.rds'</span>)) {
+    <span class="kw">set.seed</span>(<span class="dv">855</span>)
+    modFitsvm &lt;-<span class="st"> </span><span class="kw">train</span>(classe ~<span class="st"> </span>.,<span class="dt">method =</span> <span class="st">&quot;svmLinear&quot;</span>, <span class="dt">data =</span> training[,<span class="dv">3</span>:<span class="dv">59</span>])
+    <span class="kw">saveRDS</span>(modFitsvm, <span class="st">&quot;modFitsvm.rds&quot;</span>)
+    } else {
+        modFitsvm &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitsvm.rds&quot;</span>)
+        }
 predsvm &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitsvm, <span class="dt">newdata =</span> mytesting)
 
 ## Confusion matrix to show the accuracy of the models
+
 ## ## Random forest model accuracy
 <span class="kw">confusionMatrix</span>(mytesting$classe, predictrf_no_pre_pca)$overall</code></pre></div>
 <pre><code>##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
@@ -191,15 +204,23 @@ predsvm &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitsvm,
 <h2>Selecting the best models</h2>
 <p>Now we saw the accurace from our models, based in “mytesting” data, I will select the 2 best models to train with all the training data (not only 70%), and after that, use it on the 20 testing cases. I selected 2 different models to cross validate the final results (the classe from the final testing set). Because the lower accuracy and kappa (0.9082413 and 0.8836277), I rejected the linear SVM model. My selected model is based on Random Forest, the model with best accuracy (1.0) and I used the Stochastic Gradient Boosting to cross validate the final results.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## Random forest Final Model
-## modFitrfFinal &lt;- train(classe ~ .,method = &quot;rf&quot;, data = training[,3:59])
-## saveRDS(modFitrfFinal, &quot;modFitrfFinal.rds&quot;)
-modFitrfFinal &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitrfFinal.rds&quot;</span>)
+if( !<span class="kw">file.exists</span>(<span class="st">'modFitrfFinal.rds'</span>)) {
+    <span class="kw">set.seed</span>(<span class="dv">855</span>)
+    modFitrfFinal &lt;-<span class="st"> </span><span class="kw">train</span>(classe ~<span class="st"> </span>.,<span class="dt">method =</span> <span class="st">&quot;rf&quot;</span>, <span class="dt">data =</span> training[,<span class="dv">3</span>:<span class="dv">59</span>])
+    <span class="kw">saveRDS</span>(modFitrfFinal, <span class="st">&quot;modFitrfFinal.rds&quot;</span>)
+    } else {
+        modFitrfFinal &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitrfFinal.rds&quot;</span>)
+        }
 predictrfFinal &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitrfFinal, <span class="dt">newdata =</span> testing)
 
 ## Stochastic Gradient Boosting Final Model
-## modFitgbmFinal &lt;- train(classe ~ .,method = &quot;gbm&quot;, data = training[,3:59], trControl = trainControl(method=&quot;repeatedcv&quot;, number=10, repeats=3, savePred=T))
-## saveRDS(modFitgbmFinal, &quot;modFitgbmFinal.rds&quot;)
-modFitgbmFinal &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitgbmFinal.rds&quot;</span>)
+if( !<span class="kw">file.exists</span>(<span class="st">'modFitrfFinal.rds'</span>)) {
+    <span class="kw">set.seed</span>(<span class="dv">855</span>)
+    modFitgbmFinal &lt;-<span class="st"> </span><span class="kw">train</span>(classe ~<span class="st"> </span>.,<span class="dt">method =</span> <span class="st">&quot;gbm&quot;</span>, <span class="dt">data =</span> training[,<span class="dv">3</span>:<span class="dv">59</span>], <span class="dt">trControl =</span> <span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;repeatedcv&quot;</span>, <span class="dt">number=</span><span class="dv">10</span>, <span class="dt">repeats=</span><span class="dv">3</span>, <span class="dt">savePred=</span>T))
+    <span class="kw">saveRDS</span>(modFitgbmFinal, <span class="st">&quot;modFitgbmFinal.rds&quot;</span>)
+    } else {
+        modFitgbmFinal &lt;-<span class="st"> </span><span class="kw">readRDS</span>(<span class="st">&quot;modFitgbmFinal.rds&quot;</span>)
+        }
 predictgbmFinal &lt;-<span class="st"> </span><span class="kw">predict</span>(modFitgbmFinal, <span class="dt">newdata =</span> testing)</code></pre></div>
 </div>
 <div id="plots-for-the-2-best-models" class="section level2">
